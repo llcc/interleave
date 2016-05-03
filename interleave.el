@@ -121,7 +121,7 @@ the pdf directory name. e.g. \".\" is interpreted as \"/pdf/file/dir/\",
   (with-current-buffer buffer
     (save-excursion
       (goto-char (point-min))
-      (re-search-forward "^#\\+interleave_pdf: \\(.*\\)")
+      (re-search-forward "^:interleave_pdf: \\(.*\\)")
       (when (match-string 0)
         (match-string 1)))))
 
