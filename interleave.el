@@ -59,81 +59,45 @@
             (derived-mode-p 'pdf-view-mode))
     (kill-buffer (current-buffer))))
 
-(defcustom interleave-org-notes-dir-list '("~/org/interleave_notes"
-                                            ".")
-  "List of directories to look into when opening interleave notes org from a
-pdf file. The notes file is assumed to have the exact same base name as the pdf
-file (just that the file extension is .org instead of .pdf).
-
-If the notes org file is not found, it is created in the directory returned on
-doing `car' of this list (first element of the list).
-
-The notes file is searched in order from the first list element till the last;
-the search is aborted once the file is found.
-
-If a list element is \".\" or begins with \"./\", that portion is replaced with
-the pdf directory name. e.g. \".\" is interpreted as \"/pdf/file/dir/\",
-\"./notes\" is interpreted as \"/pdf/file/dir/notes/\"."
-  :type '(repeat directory)
-  :group 'interleave)
-
-(defvar *interleave--org-buffer* nil "Org notes buffer")
-(defvar *interleave--pdf-buffer* nil "PDF buffer associated with the notes buffer")
+(defvar *interleave--org-buffer* nil
+  "Org notes buffer")
+(defvar *interleave--pdf-buffer* nil
+  "PDF buffer associated with the notes buffer")
 
 (defvar interleave--window-configuration nil
   "Variable to store the window configuration before interleave mode was enabled.")
-
-;;; supress "functions are not known to be defined" warnings
-(declare-function pdf-view-next-page "pdf-view.el")
-(declare-function pdf-view-previous-page "pdf-view.el")
-(declare-function pdf-view-goto-page "pdf-view.el")
-(declare-function pdf-view-scroll-up-or-next-page "pdf-view.el")
-(declare-function pdf-view-scroll-down-or-previous-page "pdf-view.el")
-(declare-function pdf-view-current-page "pdf-view.el")
-
-(if (featurep 'pdf-view) ; if `pdf-tools' is installed
-    (progn
-      ;; Function wrapper for the macro `pdf-view-current-page'
-      (defconst interleave--pdf-current-page-fn                 (lambda () (pdf-view-current-page)))
-      (defconst interleave--pdf-next-page-fn                    #'pdf-view-next-page)
-      (defconst interleave--pdf-previous-page-fn                #'pdf-view-previous-page)
-      (defconst interleave--pdf-goto-page-fn                    #'pdf-view-goto-page)
-      (defconst interleave--pdf-scroll-up-or-next-page-fn       #'pdf-view-scroll-up-or-next-page)
-      (defconst interleave--pdf-scroll-down-or-previous-page-fn #'pdf-view-scroll-down-or-previous-page))
-  (progn
-    (defconst interleave--pdf-current-page-fn                 (lambda () (doc-view-current-page)))
-    (defconst interleave--pdf-next-page-fn                    #'doc-view-next-page)
-    (defconst interleave--pdf-previous-page-fn                #'doc-view-previous-page)
-    (defconst interleave--pdf-goto-page-fn                    #'doc-view-goto-page)
-    (defconst interleave--pdf-scroll-up-or-next-page-fn       #'doc-view-scroll-up-or-next-page)
-    (defconst interleave--pdf-scroll-down-or-previous-page-fn #'doc-view-scroll-down-or-previous-page)))
 
 (make-variable-buffer-local
  (defvar *interleave--page-marker* 0
    "Caches the current page while scrolling"))
 
 (make-variable-buffer-local
- (defvar *interleave--multi-pdf-notes-file* nil
+ (defvar *interleave--multi-pdf-notes-file* t
    "Indicates if the current Org notes file is a multi-pdf notes file."))
 
-(defun interleave--find-pdf-path (buffer)
-  "Searches for the `interleave_pdf' property in BUFFER and extracts it when found."
-  (with-current-buffer buffer
-    (save-excursion
+(defvar interleave-headline-property-formatter nil
+  "Page note property for org headline")
+
+(defvar interleave-custom-id nil
+  "Custom id")
+
+(defun interleave--find-pdf ()
+  "Searches for `interleave_pdf' property in buffer or file"
+  (save-excursion
+    (if *interleave--multi-pdf-notes-file*
+	(let* ((id (org-entry-get nil "Custom_ID"))
+	       (pdf (expand-file-name (concat id ".pdf")
+				      org-ref-pdf-directory)))
+	  (setq interleave-headline-property-formatter
+		(format "%s-page" id))
+	  (setq interleave-custom-id id)
+	  (if (f-exists? pdf)
+	      pdf
+	    (user-error "No pdf named %s found!!!!" id)))
       (goto-char (point-min))
-      (re-search-forward "^:interleave_pdf: \\(.*\\)")
+      (re-search-forward "^\\+interleave_pdf: \\(.*\\)")
       (when (match-string 0)
         (match-string 1)))))
-
-(defun interleave--headline-pdf-path (buffer)
-  (with-current-buffer buffer
-    (save-excursion
-      (let ((headline (org-element-at-point)))
-        (when (and (equal (org-element-type headline) 'headline)
-                   (equal (org-element-property :level headline) 1)
-                   (org-entry-get nil "interleave_pdf"))
-          (setq *interleave--multi-pdf-notes-file* t)
-          (org-entry-get nil "interleave_pdf"))))))
 
 (defun interleave--open-file (split-window)
   "Opens the interleave pdf file in `doc-view-mode'/`pdf-view-mode'  besides the
@@ -145,9 +109,8 @@ SPLIT-WINDOW is a function that actually splits the window, so it must be either
     (condition-case nil
         (progn
           (delete-other-windows)
-          (funcall split-window)
-          (find-file (expand-file-name (or (interleave--headline-pdf-path buf)
-                                           (interleave--find-pdf-path buf)))))
+          (funcall #'(lambda () (split-window nil 140 'vertical)))
+          (find-file (interleave--find-pdf)))
       ('error
        (let ((pdf-file-name
               (read-file-name "No #+INTERLEAVE_PDF property found. Please specify path: " "~/")))
@@ -156,69 +119,72 @@ SPLIT-WINDOW is a function that actually splits the window, so it must be either
            (insert "#+INTERLEAVE_PDF: " pdf-file-name)))))
     (interleave-pdf-mode 1)))
 
-(defun interleave--goto-parent-headline ()
-  "Search the tree for the outermost parent headline."
-  (let ((headline (org-element-at-point)))
-    (unless (equal (org-element-type headline) 'headline)
-      (outline-up-heading 1)
-      (setq headline (org-element-at-point)))
-    (ignore-errors
-      (outline-up-heading (1- (org-element-property :level headline))))))
-
-(defun interleave--goto-search-position ()
+(defun interleave--goto-search-start-position ()
   "Move point to the search start position.
 
 For multi-pdf notes this is the outermost parent headline. For everything else
 this is the beginning of the buffer."
+  (widen)
   (if *interleave--multi-pdf-notes-file*
-      (interleave--goto-parent-headline)
+      (progn
+	(goto-char (point-min))
+	(unless (re-search-forward
+		 (format
+		  "^\[ \t\r]*\:Custom_ID\: %s"
+		  interleave-custom-id) nil t)
+	  (user-error "No pdf found")))
     (goto-char (point-min))))
 
 (defun interleave--go-to-page-note (page)
   "Searches the notes buffer for an headline with the `interleave_page_note'
 property set to PAGE. It narrows the subtree when found."
-  (with-current-buffer *interleave--org-buffer*
-    (save-excursion
-      (widen)
-      (interleave--goto-search-position)
-      (when (re-search-forward (format "^\[ \t\r\]*\:interleave_page_note\: %s$"
-                                       page)
-                               nil t)
-        (org-narrow-to-subtree)
-        (org-show-entry)
-        t))))
+  (interleave--switch-to-org-buffer)
+  (interleave--goto-search-start-position)
+  (if (re-search-forward
+       (format "^\[ \t\r\]*\:%s\: %s$" interleave-headline-property-formatter page) nil t)
+      (progn (org-narrow-to-subtree)
+	     (org-show-entry) 
+	     t)
+    nil))
 
 (defun interleave-go-to-next-page ()
-  "Go to the next page in PDF. Look up for available notes."
+  "Go to the next page in PDF. Look up for available notes." 
   (interactive)
-  (funcall interleave--pdf-next-page-fn)
-  (interleave--go-to-page-note (funcall interleave--pdf-current-page-fn)))
+  (let ((page (doc-view-current-page)))
+    (funcall #'doc-view-next-page)
+    (unless (= page (doc-view-last-page-number))
+      (interleave--go-to-page-note (1+ page))
+      (interleave--switch-to-pdf-buffer))))
 
 (defun interleave-go-to-previous-page ()
-  "Go to the previous page in PDF. Look up for available notes."
+  "Go to the previous page in PDF. Look up for available notes." 
   (interactive)
-  (funcall interleave--pdf-previous-page-fn)
-  (interleave--go-to-page-note (funcall interleave--pdf-current-page-fn)))
+  (let ((page (doc-view-current-page))) 
+    (funcall #'doc-view-previous-page)
+    (unless (= page 1)
+      (interleave--go-to-page-note (1- page))
+      (interleave--switch-to-pdf-buffer))))
 
 (defun interleave-scroll-up ()
   "Scroll up the PDF. Look up for available notes."
   (interactive)
-  (setq *interleave--page-marker* (funcall interleave--pdf-current-page-fn))
-  (funcall interleave--pdf-scroll-up-or-next-page-fn)
-  (unless (= *interleave--page-marker* (funcall interleave--pdf-current-page-fn))
-    (interleave--go-to-page-note (funcall interleave--pdf-current-page-fn))))
+  (setq *interleave--page-marker* (funcall #'doc-view-current-page))
+  (funcall #'doc-view-scroll-up-or-next-page)
+  (unless (= *interleave--page-marker* (funcall #'doc-view-current-page))
+    (interleave--go-to-page-note (funcall #'doc-view-current-page)))
+  (interleave--switch-to-pdf-buffer))
 
 (defun interleave-scroll-down ()
   "Scroll down the PDF. Look up for available notes."
   (interactive)
-  (setq *interleave--page-marker* (funcall interleave--pdf-current-page-fn))
-  (funcall interleave--pdf-scroll-down-or-previous-page-fn)
-  (unless (= *interleave--page-marker* (funcall interleave--pdf-current-page-fn))
-    (interleave--go-to-page-note (funcall interleave--pdf-current-page-fn))))
+  (setq *interleave--page-marker* (funcall #'doc-view-current-page))
+  (funcall #'doc-view-scroll-down-or-previous-page)
+  (unless (= *interleave--page-marker* (funcall #'doc-view-current-page))
+    (interleave--go-to-page-note (funcall #'doc-view-current-page)))
+  (interleave--switch-to-pdf-buffer))
 
 (defun interleave--switch-to-org-buffer (&optional insert-newline-maybe)
-  (if (or (derived-mode-p 'doc-view-mode)
-          (derived-mode-p 'pdf-view-mode))
+  (if (derived-mode-p 'doc-view-mode) 
       (switch-to-buffer-other-window *interleave--org-buffer*)
     (switch-to-buffer *interleave--org-buffer*))
   (when insert-newline-maybe
@@ -233,40 +199,29 @@ property set to PAGE. It narrows the subtree when found."
       (switch-to-buffer-other-window *interleave--pdf-buffer*)
     (switch-to-buffer *interleave--pdf-buffer*)))
 
-(defun interleave--goto-insert-position ()
-  "Move the point to the right insert postion.
-
-For multi-pdf notes this is the end of the subtree. For everything else
-this is the end of the buffer"
-  (if (not *interleave--multi-pdf-notes-file*)
-      (goto-char (point-max))
-    (interleave--goto-parent-headline)
-    (org-end-of-subtree)))
-
 (defun interleave--insert-heading-respect-content ()
   (org-insert-heading-respect-content)
-  (let ((new-heading (org-element-at-point)))
-    (when (and *interleave--multi-pdf-notes-file*
-               (< (org-element-property :level new-heading) 2))
-      (org-demote))))
+  (when *interleave--multi-pdf-notes-file*
+    (org-demote)))
 
 (defun interleave--create-new-note (page)
   "Creates a new headline for the page PAGE."
-  (with-current-buffer *interleave--org-buffer*
-    (save-excursion
-      (widen)
-      (interleave--goto-insert-position)
-      (interleave--insert-heading-respect-content)
-      (insert (format "Notes for page %d" page))
-      (org-set-property "interleave_page_note" (number-to-string page))
-      (org-narrow-to-subtree)))
-  (interleave--switch-to-org-buffer t))
+  (interleave--switch-to-org-buffer t) 
+  (interleave--goto-search-start-position) 
+  (interleave--insert-heading-respect-content)
+  (insert (format "Notes for page %d" page))
+  (org-set-property interleave-headline-property-formatter
+		    (number-to-string page))
+  (org-end-of-subtree)
+  (newline 2)
+  (org-cycle-hide-drawers nil)
+  (org-narrow-to-subtree))
 
-(defun interleave-add-note ()
+(defun interleave-add-note-for-pdf ()
   "Add note for the current page. If there are already notes for this page,
 jump to the notes buffer."
   (interactive)
-  (let ((page (funcall interleave--pdf-current-page-fn)))
+  (let ((page (doc-view-current-page)))
     (if (interleave--go-to-page-note page)
         (interleave--switch-to-org-buffer t)
       (interleave--create-new-note page))))
@@ -276,122 +231,110 @@ jump to the notes buffer."
 the current narrowed down notes view."
   (interactive)
   (interleave--switch-to-org-buffer)
-  (let ((pdf-page))
-    (save-excursion
-      (org-narrow-to-subtree)
-      (goto-char (point-min))
-      (re-search-forward "^ *:interleave_page_note: *\\(.*\\)")
-      (setq pdf-page (string-to-number (match-string 1))))
+  (let (pdf-page)
+    (setq pdf-page
+          (string-to-number (org-entry-get nil interleave-headline-property-formatter))) 
     (interleave--switch-to-pdf-buffer)
-    (funcall interleave--pdf-goto-page-fn pdf-page)))
+    (funcall #'(lambda (doc-view-goto-page pdf-page)))
+    (interleave--switch-to-org-buffer)))
 
 (defun interleave--sync-pdf-page-previous ()
   "Synchronize the page in the pdf buffer to be the same as the page in the
 previous set of notes."
   (interactive)
   (interleave--switch-to-org-buffer)
-  (let ((pdf-page))
-    (save-excursion
-      (org-narrow-to-subtree)
-      (goto-char (point-min))
-      (widen)
-      (when (re-search-backward "^ *:interleave_page_note: *\\(.*\\)" nil :noerror)
-        (setq pdf-page (string-to-number (match-string 1)))))
+  (let (pdf-page)
+    (org-narrow-to-subtree)
+    (goto-char (point-min))
+    (widen)
+    (when (ignore-errors
+	    (re-search-backward (format
+				 "^ *:%s: *\\(.*\\)"
+				 interleave-headline-property-formatter)
+				nil))
+      (setq pdf-page (string-to-number (match-string 1))))
     (if pdf-page
         (progn
-          (interleave--go-to-page-note pdf-page)
+          (org-narrow-to-subtree)
+          ;; (interleave--go-to-page-note pdf-page)
           (interleave--switch-to-pdf-buffer)
-          (funcall interleave--pdf-goto-page-fn pdf-page))
-      (org-narrow-to-subtree))))
+          (funcall #'(lambda () (doc-view-goto-page pdf-page)))
+	  (interleave--switch-to-org-buffer)
+	  (org-end-of-subtree))
+      (org-narrow-to-subtree)
+      (message "First note")
+      (org-end-of-subtree))))
 
 (defun interleave--sync-pdf-page-next ()
   "Synchronize the page in the pdf buffer to be the same as the page in the
 next set of notes."
   (interactive)
   (interleave--switch-to-org-buffer)
-  (let ((pdf-page))
-    (save-excursion
-      (org-narrow-to-subtree)
-      (goto-char (point-min))
-      (re-search-forward "^ *:interleave_page_note:") ; current page
-      (widen)
-      (when (re-search-forward "^ *:interleave_page_note: *\\(.*\\)" nil :noerror) ; next page
-        (setq pdf-page (string-to-number (match-string 1)))))
-    (if pdf-page
+  (let (pdf-page)
+    (org-narrow-to-subtree)
+    (goto-char (point-max))
+    (widen)
+    (when (re-search-forward (format
+			      "^ *:%s: *\\(.*\\)"
+			      interleave-headline-property-formatter)
+			     nil :noerror) ; next page
+      (setq pdf-page (string-to-number (match-string 1))))
+    (if pdf-page 
         (progn
-          (interleave--go-to-page-note pdf-page)
           (interleave--switch-to-pdf-buffer)
-          (funcall interleave--pdf-goto-page-fn pdf-page))
-      (org-narrow-to-subtree))))
+          (funcall #'(lambda () (doc-view-goto-page pdf-page)))
+          (interleave--go-to-page-note pdf-page)
+          (org-narrow-to-subtree)
+	  (org-end-of-subtree))
+      (org-narrow-to-subtree)
+      (message "No next notes"))))
 
-;;;###autoload
-(defun interleave--open-notes-file-for-pdf ()
-  "Open the notes org file for the current pdf file if it exists.
-Else create it.
-
-It is assumed that the notes org file will have the exact same base name
-as the pdf file (just that the notes file will have a .org extension instead
-of .pdf)."
+(defun interleave--add-note-from-pdf ()
+  "Open the notes associated with the entry using `find-file'."
   (interactive)
-  (when (or (derived-mode-p 'doc-view-mode)
-            (derived-mode-p 'pdf-view-mode))
-    (let* ((pdf-file-name (buffer-file-name))
-           (org-file-name-sans-directory (concat (file-name-base pdf-file-name)
-                                                 ".org"))
-           org-file-create-dir
-           (cnt 0)
-           try-org-file-name
-           (org-file-name (catch 'break
-                            (dolist (dir interleave-org-notes-dir-list)
-                              ;; If dir is "." or begins with "./", replace
-                              ;; the "." or "./" with the pdf dir name
-                              (setq dir (replace-regexp-in-string
-                                         "^\\(\\.$\\|\\./\\).*"
-                                         (file-name-directory pdf-file-name)
-                                         dir nil nil 1))
-                              (when (= cnt 0)
-                                ;; In the event the org file is needed to be
-                                ;; created, it will be created in the directory
-                                ;; listed as the first element in
-                                ;; `interleave-org-notes-dir-list'
-                                (setq org-file-create-dir dir))
-                              (setq cnt (1+ cnt))
-                              (setq try-org-file-name (locate-file
-                                                       org-file-name-sans-directory
-                                                       (list dir)))
-                              (when try-org-file-name
-                                ;; return the first match
-                                (throw 'break try-org-file-name))))))
-      ;; Create the notes org file if it does not exist
-      (when (null org-file-name)
-        (setq org-file-name (if (null interleave-org-notes-dir-list)
-                                (read-file-name "Path: " "~/")
-                              (progn
-                                (when (null (file-exists-p org-file-create-dir))
-                                  (make-directory org-file-create-dir))
-                                (expand-file-name org-file-name-sans-directory
-                                                  org-file-create-dir))))
-        (with-temp-file org-file-name
-          (insert "#+INTERLEAVE_PDF: " pdf-file-name)))
-      ;; Open the notes org file and enable `interleave'
-      (find-file org-file-name)
-      (interleave))))
+  (when (or (f-exists? (buffer-file-name)) (derived-mode-p 'doc-view-mode))
+    (let* ((pdf (buffer-file-name))
+	   (key (file-name-base pdf)))
+      (if (f-directory? bibtex-completion-notes-path)
+	  (let ((path (f-join bibtex-completion-notes-path
+			      (s-concat key bibtex-completion-notes-extension))))
+	    (find-file path)
+	    (unless (f-exists? path)
+	      (insert (s-index-of bibtex-completion-notes-template-multiple-files
+				  'bibtex-completion-apa-get-value
+				  (bibtex-completion-get-entry key)))))
+					; One file for all notes:
+	(find-file-other-window bibtex-completion-notes-path)
+	(widen)
+	(show-all)
+	(goto-char (point-min))
+	(if (re-search-forward (format bibtex-completion-notes-key-pattern key) nil t)
+					; Existing entry found:
+	    (when (eq major-mode 'org-mode)
+	      (org-narrow-to-subtree)
+	      (re-search-backward "^\*+ " nil t)
+	      (org-cycle-hide-drawers nil)
+	      (bibtex-completion-notes-mode 1))
+					; Create a new entry:
+	  (let ((entry (bibtex-completion-get-entry key)))
+	    (goto-char (point-max))
+	    (insert (s-format bibtex-completion-notes-template-one-file
+			      'bibtex-completion-apa-get-value
+			      entry))
+	    (org-set-property "interleave_pdf" pdf)
+	    (call-interactively 'interleave)))))))
 
 (defun interleave--quit ()
   "Quit interleave mode."
   (interactive)
-  (with-current-buffer *interleave--org-buffer*
-    (widen)
-    (interleave--goto-search-position)
-    (when (interleave--headlines-available-p)
-      (interleave--sort-notes interleave-sort-order)
-      (org-overview))
-    (interleave 0))
+  (interleave--switch-to-org-buffer)
+  (widen)
+  (interleave--goto-search-start-position)
+  (ignore-errors
+    (interleave--sort-notes interleave-sort-order))
+  (org-overview)
+  (interleave 0)
   (interleave--pdf-kill-proc-and-buffer))
-
-(defun interleave--headlines-available-p ()
-  (save-excursion
-    (re-search-forward "^\* .*" nil t)))
 
 (defcustom interleave-sort-order 'asc
   "Specifiy the notes' sort order in the notes buffer.
@@ -455,6 +398,7 @@ Keybindings (org-mode buffer):
 
 \\{interleave-map}"
   :lighter " ≡"
+  :global nil
   :keymap  interleave-map
   (if interleave
       (progn
@@ -463,7 +407,8 @@ Keybindings (org-mode buffer):
         (setq *interleave--org-buffer* (current-buffer))
         (interleave--open-file (or (and current-prefix-arg #'split-window-below)
                                    #'split-window-right))
-        (interleave--go-to-page-note 1))
+        (interleave--go-to-page-note 1)
+        (interleave--switch-to-pdf-buffer))
     (progn
       (message "Interleave disabled")
       (set-window-configuration interleave--window-configuration))))
@@ -478,10 +423,10 @@ Keybindings (org-mode buffer):
 (define-minor-mode interleave-pdf-mode
   "Interleave view for the pdf."
   :lighter " ≡"
+  :global nil
   :keymap  interleave-pdf-mode-map
   (when interleave-pdf-mode
-    (progn
-      (setq *interleave--pdf-buffer* (current-buffer)))))
+    (setq *interleave--pdf-buffer* (current-buffer))))
 
 ;;; Key-bindings
 
@@ -494,15 +439,15 @@ Keybindings (org-mode buffer):
 (define-key interleave-pdf-mode-map (kbd "SPC")   #'interleave-scroll-up)
 (define-key interleave-pdf-mode-map (kbd "S-SPC") #'interleave-scroll-down)
 (define-key interleave-pdf-mode-map (kbd "DEL")   #'interleave-scroll-down)
-(define-key interleave-pdf-mode-map (kbd "i")     #'interleave-add-note)
+(define-key interleave-pdf-mode-map (kbd "i")     #'interleave-add-note-for-pdf)
 (define-key interleave-pdf-mode-map (kbd "q")     #'interleave--quit)
 (define-key interleave-pdf-mode-map (kbd "M-.")   #'interleave--sync-pdf-page-current)
 (define-key interleave-pdf-mode-map (kbd "M-p")   #'interleave--sync-pdf-page-previous)
 (define-key interleave-pdf-mode-map (kbd "M-n")   #'interleave--sync-pdf-page-next)
 
-(define-key doc-view-mode-map (kbd "i") #'interleave--open-notes-file-for-pdf)
+(define-key doc-view-mode-map (kbd "i") #'interleave--add-note-from-pdf)
 (when (featurep 'pdf-view)
-  (define-key pdf-view-mode-map (kbd "i") #'interleave--open-notes-file-for-pdf))
+  (define-key pdf-view-mode-map (kbd "i") #'interleave--add-note-from-pdf))
 
 
 (provide 'interleave)
