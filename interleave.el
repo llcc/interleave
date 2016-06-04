@@ -350,15 +350,13 @@ next set of notes."
 	    (when (eq major-mode 'org-mode)
 	      (org-narrow-to-subtree)
 	      (re-search-backward "^\*+ " nil t)
-	      (org-cycle-hide-drawers nil)
-	      (bibtex-completion-notes-mode 1))
+	      (org-cycle-hide-drawers nil))
 					; Create a new entry:
 	  (let ((entry (bibtex-completion-get-entry key)))
 	    (goto-char (point-max))
 	    (insert (s-format bibtex-completion-notes-template-one-file
 			      'bibtex-completion-apa-get-value
 			      entry))
-	    (org-set-property "interleave_pdf" pdf)
 	    (call-interactively 'interleave)))))))
 
 (defun interleave--quit ()
