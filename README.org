@@ -1,89 +1,34 @@
-[[http://melpa.org/#/interleave][file:http://melpa.org/packages/interleave-badge.svg]]
+#+TITLE:Interleave adapted to org-ref and helm-bibtex
 
 * Interleaved Textbooks?
 
-Some history, what this is all about...
+You can find an introduction of this package in [[https://github.com/rudolfochrist/interleave][interleave]].
 
-In the past, textbooks were sometimes published as /interleaved/ editions. That meant, each page was followed by a blank page and the ambitious student/scholar had the ability to take his notes directly in her copy of the textbook. Newton and Kant were prominent representatives of this technique [fn:blumbach].
-
-Nowadays textbooks (or lecture material) come in PDF format. Although almost every PDF Reader has the ability to add some notes to the PDF itself, it is not as powerful as it could be. This is what this [[https://www.gnu.org/software/emacs/][Emacs]] minor mode tries to accomplish. It presents your PDF side by side to an [[http://orgmode.org][Org Mode]] buffer with you notes. Narrowing down to just those passages that are relevant to this particular page in the document viewer.
-
-In a later step it should be possible to create truly /interleaved/ PDFs of your notes.
+The package was modified on the top of [[github:rudolfochrist/interleave][rudolfochrist/interleave]]. The orignal interleave gets the pdf file which stored in a =INTERLEAVE_PDF= property and start. This works greatly except that you need to set the pdf path on your own. This is of inconvenience sometimes especially when you need to choose a deep or different pdf path. Addtionally, I am using [[https://github.com/jkitchin/org-ref][org-ref]] and [[https://github.com/tmalsburg/helm-bibtex][helm-bibtex]] a lot, so I modified the orignail interleave to work well with them.
 
 * Installation
 
-Add MELPA to your package archives in your init file
-
-#+BEGIN_SRC emacs-lisp
-(package-initialize)
-(add-to-list 'package-archives
-             '("melpa" . "http://melpa.org/packages/") t)
-#+END_SRC
-
-Then install *interleave* with
+Since this is just a modified copy, I cannot sumbit it to the melpa. You can clone this package to your local storage. 
 
 #+BEGIN_EXAMPLE
-M-x package-install RET interleave RET
+git clone https://github.com/llcc/interleave
 #+END_EXAMPLE
+
+and load it:
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'load-path "Your interleave path")
+(require 'interleave)
+#+END_SRC
 
 * Usage
 
-Create a Org file that will keep your notes. In the Org header section (=#+TITLE=, =#+AUTHOR=, etc.) add
+If you use org-ref or helm-bibtex, you should have configured your pdf and notes path, and you can make a note headline in your note file which has a property called =Custom_ID= with a bibtex entry key.
+On this headline, you can start by
 
-#+BEGIN_SRC
-#+INTERLEAVE_PDF: /the/path/to/pdf.pdf
-#+END_SRC
-
-Then you can start *interleave* by typing
-
-#+BEGIN_SRC
+#+BEGIN_EXAMPLE
 M-x interleave
-#+END_SRC
+#+END_EXAMPLE
 
-This will display the PDF side by side to the org buffer for your notes. You can navigate the PDF as usual
-with @@html:<kbd>@@n@@html:</kbd>@@ and @@html:<kbd>@@p@@html:</kbd>@@. Changing the page of the PDF will also narrow to the notes that are meant for this particular PDF page.
+You can find the documentation of the usage in the orignal repository. Happy noting!
 
-If you want to add some notes to the current page you can type @@html:<kbd>@@i@@html:</kbd>@@.
-This will create a new headline for your notes. If some notes are already present, @@html:<kbd>@@i@@html:</kbd>@@ will switch over to the other buffer.
-
-Typing @@html:<kbd>@@q@@html:</kbd>@@ in the /DocView/ will quit *interleave*.
-
-** Multi-PDF Notes
-
-Normally the notes/PDF relation is bidirectional. This means for every PDF there is one notes file. But it is
-also possible to keep a single notes file for multiple PDFs.
-
-To keep a multi-PDF notes file create a headline for each PDF and set the =INTERLEAVE_PDF= property on it.
-
-: * Notes for CS103
-:   :PROPERTIES:
-:   :INTERLEAVE_PDF: cs103.pdf
-:   :END:
-
-To use =interleave= on this headline, simply place your point onto the headline an type
-
-: M-x interleave RET
-
-to start =interleave= for this subtree.
-
-*Notice that you have to decide. It is not possible to keep multi-PDF and normal notes in the same file.*
-
-* Key-bindings
-
-| Key                                | Description                                 | Availability       |
-|------------------------------------+---------------------------------------------+--------------------|
-| @@html:<kbd>@@n@@html:</kbd>@@     | Go to next page                             | PDF Buffer         |
-| @@html:<kbd>@@p@@html:</kbd>@@     | Go to previous page                         | PDF Buffer         |
-| @@html:<kbd>@@SPC@@html:</kbd>@@   | Scroll up                                   | PDF Buffer         |
-| @@html:<kbd>@@S-SPC@@html:</kbd>@@ | Scroll down                                 | PDF Buffer         |
-| @@html:<kbd>@@DEL@@html:</kbd>@@   | Scroll down                                 | PDF Buffer         |
-| @@html:<kbd>@@i@@html:</kbd>@@     | Insert new notes/go to notes                | PDF Buffer         |
-| @@html:<kbd>@@q@@html:</kbd>@@     | Quit =interleave=                           | PDF Buffer         |
-| @@html:<kbd>@@M-.@@html:</kbd>@@   | Go to page of currently visible notes       | PDF and Org Buffer |
-| @@html:<kbd>@@M-p@@html:</kbd>@@   | Go to the page of the previous set of notes | PDF and Org Buffer |
-| @@html:<kbd>@@M-n@@html:</kbd>@@   | Go to the page of the next set of notes     | PDF and Org Buffer |
-
-
-* Footnotes
-
-[fn:blumbach] For some more information see: [[http://takingnotenow.blogspot.de/2008/07/note-keeping-in-1786-blumenbachs-system.html]]
