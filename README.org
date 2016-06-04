@@ -1,6 +1,6 @@
 * Interleave adapted to org-ref and helm-bibtex
 
-You can find the comprehensive introduction of this package in [[https://github.com/rudolfochrist/interleave][interleave]] which created by rudolfochrist. 
+You can find the comprehensive introduction of this package in [[https://github.com/rudolfochrist/interleave][interleave]] which created by rudolfochrist. Thanks rudolfochrist for giving us this great package.
 
 The package was modified on the top of [[github:rudolfochrist/interleave][rudolfochrist/interleave]] with a different concept, supply of new feature and some issue fix. The orignal interleave gets the pdf path from a =INTERLEAVE_PDF= property belongs to the bibtex entry headline. It works greatly at most circumstance except the inconvience of setup of pdf path on your own, especially you have to choose a deep or other different path.
 
@@ -23,7 +23,7 @@ and load it:
 
 * Usage
 
-If you use org-ref or helm-bibtex, you should have configured your own pdf and notes path. Helm-bibtex supports two kinds of note files: notes per bibtex entry and multiple entry notes in one single file. This package only considers the multiple notes. If you make notes every single bibtex entry, you should not consider to use it. Of course, it is not hard to bring new functionality up but is is not on my high priority. If you need this, please report it in the issue.
+If you use org-ref or helm-bibtex, you should have configured your own pdf and notes path. Helm-bibtex supports two kinds of note files: notes file per bibtex entry and multiple entry notes in one single file. This package only considers the multiple notes. If you make notes every single bibtex entry, you should not consider to use it. Of course, it is not hard to bring up this new functionality to compatible with multiple notes file, but it is not on my high priority. If you need this, please report it in the issue.
 
 ** Start to interleave
 After you create a note headline by =helm-bibtex=, this headline should have already had a propery called =Custom_ID= with the bibtex entry key.
