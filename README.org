@@ -1,6 +1,4 @@
-#+TITLE:Interleave adapted to org-ref and helm-bibtex
-
-* Interleaved Textbooks?
+* Interleave adapted to org-ref and helm-bibtex
 
 You can find an introduction of this package in [[https://github.com/rudolfochrist/interleave][interleave]].
 
