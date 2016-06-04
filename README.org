@@ -1,14 +1,12 @@
 * Interleave adapted to org-ref and helm-bibtex
 
-You can find the comprehensive introduction of this package in [[https://github.com/rudolfochrist/interleave][interleave]] which created by rudolfochrist. Thanks rudolfochrist for giving us this great package.
+First, You can find a more comprehensive introduction of this package in [[https://github.com/rudolfochrist/interleave][interleave]]. I forked it from the orignal author rudolfochrist. Thanks rudolfochrist for giving us this great package.
 
-The package was modified on the top of [[github:rudolfochrist/interleave][rudolfochrist/interleave]] with a different concept, supply of new feature and some issue fix. The orignal interleave gets the pdf path from a =INTERLEAVE_PDF= property belongs to the bibtex entry headline. It works greatly at most circumstance except the inconvience of setup of pdf path on your own, especially you have to choose a deep or other different path.
-
-Addtionally, I am using [[https://github.com/jkitchin/org-ref][org-ref]] and [[https://github.com/tmalsburg/helm-bibtex][helm-bibtex]] a lot, so I planned to adapt the orignal interleave to work well with them.
+So the package was modified on the top of [[github:rudolfochrist/interleave][rudolfochrist/interleave]] with a different approach, supply of new features and some issue fix. The biggest difference between these two is that you need to setup the pdf path in the orignal interleave, but no need in current one. The orignal one gets the pdf path from a =INTERLEAVE_PDF= property of entry headline which should be configured manually. This one can deal with the pdf closely combined with two great packages [[https://github.com/jkitchin/org-ref][org-ref]] and [[https://github.com/tmalsburg/helm-bibtex][helm-bibtex]], which have got them great reputation in the emacs bibtex management community. This package ensure to make interleave work with them flawlessly. 
 
 * Installation
-
-Since this is just a modified copy, I cannot sumbit it to the melpa. You can clone this package to your local storage. 
+t agri
+Since it has changed a lot of codes from the orignal one, and offers another algorithm different from orignal one, but with same name, I cannot submit it to the melpa repository. You can simply clone it by:
 
 #+BEGIN_EXAMPLE
 git clone https://github.com/llcc/interleave
@@ -72,5 +70,9 @@ or page property suffix
 #+BEGIN_SRC emacs-lisp :tangle yes
 (setq interleave--page-property-suffix "page-number")
 #+END_SRC
+
+Currently, =pdf-tools= has not been supported yet, but it is on the table. 
+
+Any ideas and suggestion about the package is welcomed and appreciated!
 
 
