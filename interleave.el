@@ -48,6 +48,7 @@
 (require 'org)
 (require 'org-ref)
 (require 'doc-view)
+(require 'bibtex-completion)
 
 (defgroup interleave nil
   "interleave group"
@@ -144,6 +145,7 @@ SPLIT-WINDOW is a function that actually splits the window, so it must be either
     (condition-case err
         (progn
           (delete-other-windows)
+	  (set-frame-parameter nil 'fullscreen 'maximized)
           (funcall #'(lambda () (split-window
 				 nil interleave--window-split-width 'vertical)))
 	  (find-file (interleave--find-pdf))
