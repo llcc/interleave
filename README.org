@@ -2,11 +2,11 @@
 
 First, You can find a much more comprehensive introduction of this package in [[https://github.com/rudolfochrist/interleave][interleave]]. I forked it from the original author rudolfochrist. Thanks rudolfochrist for giving us this great package.
 
-So the package was modified on the top of [[https://github.com/rudolfochrist/interleave][rudolfochrist/interleave]] with a different approach, supply of new features and some issue fix. The biggest difference between these two is that you need to setup the pdf path in the original interleave, but no need in current one. The original one gets the pdf path from a =INTERLEAVE_PDF= property of entry headline which should be configured manually. This one can process the pdf path closely combined with two great packages [[https://github.com/jkitchin/org-ref][org-ref]] and [[https://github.com/tmalsburg/helm-bibtex][helm-bibtex]], which have got them great reputation in the emacs bibtex management community. If you use them frequently, you can now just call =interleave= to make notes at ease without changing anything. This package ensure to make interleave work with them flawlessly. 
+So the package was modified on the top of [[https://github.com/rudolfochrist/interleave][rudolfochrist/interleave]] with a different approach, supply of new features and some issue fix. The biggest difference between these two is that you need to setup the PDF path in the original interleave, but no need in current one. The original one gets the PDF path from a =INTERLEAVE_PDF= property of entry headline which should be configured manually. This one can process the PDF path closely combined with two great packages [[https://github.com/jkitchin/org-ref][org-ref]] and [[https://github.com/tmalsburg/helm-bibtex][helm-bibtex]], which have got them great reputation in the emacs bibtex management community. If you use them frequently, you can now just call =interleave= to make notes at ease without changing anything. This package ensure to make interleave work with them flawlessly. 
 
 * Installation
 
-Since it has changed a lot of codes from the original one, and offers another algorithm different from original one, but with same name, I cannot submit it to the Melpa repository. You can simply clone it by:
+Since it has changed a lot of codes from the original one, and offers another algorithm different from original one, but with same name, I cannot submit it to the MELPA repository. You can simply clone it by:
 
 #+BEGIN_EXAMPLE
 git clone https://github.com/llcc/interleave
@@ -21,7 +21,7 @@ and load it:
 
 * Usage
 
-If you use org-ref or helm-bibtex, you should have configured your own pdf and notes path. Helm-bibtex supports two kinds of note files: notes file per bibtex entry and multiple entry notes in one single file. This package only considers the multiple notes. If you make notes every single bibtex entry, you should not consider to use it. Of course, it is not hard to bring up this new functionality to compatible with multiple notes file, but it is not on my high priority. If you need this, please report it in the issue.
+If you use org-ref or helm-bibtex, you should have configured your own PDF and notes path. Helm-bibtex supports two kinds of note files: notes file per bibtex entry and multiple entry notes in one single file. This package only considers the multiple notes. If you make notes every single bibtex entry, you should not consider to use it. Of course, it is not hard to bring up this new functionality to compatible with multiple notes file, but it is not on my high priority. If you need this, please report it in the issue.
 
 ** Start to interleave
 After you create a note headline by =helm-bibtex=, this headline should have already had a property called =Custom_ID= with the bibtex entry key.
@@ -41,10 +41,10 @@ M-x interleave
 
 ** Navigation
 
-You can use @@html:<kbd>@@n@@html:</kbd>@@, @@html:<kbd>@@p@@html:</kbd>@@, @@html:<kbd>@@SPC@@html:</kbd>@@, @@html:<kbd>@@S-SPC@@html:</kbd>@@ to navigate the pdf, and synchronise pdf page and note by @@html:<kbd>@@M-.@@html:</kbd>@@, @@html:<kbd>@@M-p@@html:</kbd>@@, @@html:<kbd>@@M-n@@html:</kbd>@@. Quit by @@html:<kbd>@@q@@html:</kbd>@@.
-** New notes for current pdf page
+You can use @@html:<kbd>@@n@@html:</kbd>@@, @@html:<kbd>@@p@@html:</kbd>@@, @@html:<kbd>@@SPC@@html:</kbd>@@, @@html:<kbd>@@S-SPC@@html:</kbd>@@ to navigate the PDF, and synchronise PDF page and note by @@html:<kbd>@@M-.@@html:</kbd>@@, @@html:<kbd>@@M-p@@html:</kbd>@@, @@html:<kbd>@@M-n@@html:</kbd>@@. Quit by @@html:<kbd>@@q@@html:</kbd>@@.
+** New notes for current PDF page
 
-Press @@html:<kbd>@@i@@html:</kbd>@@ to new a sub-note for current pdf page. A property named with the combination of entry key and "page", i.e. =jaap-2001-fatig-page=, and page number.
+Press @@html:<kbd>@@i@@html:</kbd>@@ to new a sub-note for current PDF page. A property named with the combination of entry key and "page", i.e. =jaap-2001-fatig-page=, and page number, will be inserted below the parent headline.
 
 #+BEGIN_SRC org
 :** Notes for page [[file:/jaap-2001-fatig.pdf::54][54]] 
@@ -53,9 +53,9 @@ Press @@html:<kbd>@@i@@html:</kbd>@@ to new a sub-note for current pdf page. A p
 :   :END:
 #+END_SRC
 
-Changing the page of the PDF will also narrow to the notes for this particular PDF page. If no notes exist for current pdf page, overview of all the pages notes will be shown in the notes buffer.
+Changing the page of the PDF will also narrow to the notes for this particular PDF page. If no notes exist for current PDF page, overview of all the pages notes will be shown in the notes buffer.
 
-You may have noticed the link: =[[file:/jaap-2001-fatig.pdf::54][54]]=. If you have sumatrapdf installed, you can open the pdf in the sumatrapdf with page synchronized, which can let you to view the pdf comments externally. Of course you can turn it off by
+You may have noticed the link: =[[file:/jaap-2001-fatig.pdf::54][54]]=. If you have [[http://www.sumatrapdfreader.org/free-pdf-reader.html][SumatraPDF]] installed, you can open the PDF in the [[http://www.sumatrapdfreader.org/free-pdf-reader.html][SumatraPDF]] by locating the exact page, which can let you to view the PDF comments externally. Of course you can turn it off by:
 
 #+BEGIN_SRC emacs-lisp :tangle yes
 (setq interleave--pdf-external-link nil)
@@ -63,7 +63,7 @@ You may have noticed the link: =[[file:/jaap-2001-fatig.pdf::54][54]]=. If you h
 
 ** Customize
 
-You can customize the pdf buffer width by:
+You can customize the PDF buffer width by:
 
 #+BEGIN_SRC emacs-lisp :tangle yes
 (setq interleave--window-split-width 150)
