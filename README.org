@@ -1,10 +1,10 @@
 * Interleave adapted to org-ref and helm-bibtex
 
-You can find an introduction of this package in [[https://github.com/rudolfochrist/interleave][interleave]] which created by rudolfochrist.
+You can find the comprehensive introduction of this package in [[https://github.com/rudolfochrist/interleave][interleave]] which created by rudolfochrist. 
 
-The package was modified on the top of [[github:rudolfochrist/interleave][rudolfochrist/interleave]] by a different way and supply more functionality. The orignal interleave gets the pdf file which stored in a =INTERLEAVE_PDF= property and start. This works greatly except that you need to set the pdf path on your own. This is of inconvenience sometimes especially when you need to choose a deep or different pdf path.
+The package was modified on the top of [[github:rudolfochrist/interleave][rudolfochrist/interleave]] with a different concept, supply of new feature and some issue fix. The orignal interleave gets the pdf path from a =INTERLEAVE_PDF= property belongs to the bibtex entry headline. It works greatly at most circumstance except the inconvience of setup of pdf path on your own, especially you have to choose a deep or other different path.
 
-Addtionally, I am using [[https://github.com/jkitchin/org-ref][org-ref]] and [[https://github.com/tmalsburg/helm-bibtex][helm-bibtex]] a lot, so I modified the orignail interleave to work well with them.
+Addtionally, I am using [[https://github.com/jkitchin/org-ref][org-ref]] and [[https://github.com/tmalsburg/helm-bibtex][helm-bibtex]] a lot, so I planned to adapt the orignal interleave to work well with them.
 
 * Installation
 
@@ -26,7 +26,16 @@ and load it:
 If you use org-ref or helm-bibtex, you should have configured your own pdf and notes path. Helm-bibtex supports two kinds of note files: notes per bibtex entry and multiple entry notes in one single file. This package only considers the multiple notes. If you make notes every single bibtex entry, you should not consider to use it. Of course, it is not hard to bring new functionality up but is is not on my high priority. If you need this, please report it in the issue.
 
 ** Start to interleave
-After you create a note headline by =helm-bibtex=, this headline should have already had a propery called =Custom_ID= with the bibtex entry key. Then start here by (note: you need to put your cursor everywhere in scope of the headline): 
+After you create a note headline by =helm-bibtex=, this headline should have already had a propery called =Custom_ID= with the bibtex entry key.
+
+#+BEGIN_EXAMPLE
+:* Schi(2001): Notes of a bibtex entry
+:  :PROPERTIES:
+:  :Custom_ID: jaap-2001-fatig
+:  :END:
+#+END_EXAMPLE
+
+Then start here by (note: you need to put your cursor everywhere in scope of the headline): 
 
 #+BEGIN_EXAMPLE
 M-x interleave
@@ -34,8 +43,7 @@ M-x interleave
 
 ** Navigation
 
-You can use @@html:<kbd>@@n@@html:</kbd>@@, @@html:<kbd>@@p@@html:</kbd>@@, @@html:<kbd>@@SPC@@html:</kbd>@@, @@html:<kbd>@@S-SPC@@html:</kbd>@@ to navigate your pdf.
-
+You can use @@html:<kbd>@@n@@html:</kbd>@@, @@html:<kbd>@@p@@html:</kbd>@@, @@html:<kbd>@@SPC@@html:</kbd>@@, @@html:<kbd>@@S-SPC@@html:</kbd>@@ to navigate the pdf, and synchronise pdf page and note by @@html:<kbd>@@M-.@@html:</kbd>@@, @@html:<kbd>@@M-p@@html:</kbd>@@, @@html:<kbd>@@M-n@@html:</kbd>@@. Quit by @@html:<kbd>@@q@@html:</kbd>@@.
 ** New notes for current pdf page
 
 Press @@html:<kbd>@@i@@html:</kbd>@@ to new a subnote for current pdf page. A property named with the combination of entry key and "page", i.e. =jaap-2001-fatig-page=, and page number.
@@ -50,5 +58,19 @@ Press @@html:<kbd>@@i@@html:</kbd>@@ to new a subnote for current pdf page. A pr
 Changing the page of the PDF will also narrow to the notes for this particular PDF page. If no notes exist for current pdf page, overview of all the pages notes will be shown in the notes buffer.
 
 You may have noticed the link: =[[file:/jaap-2001-fatig.pdf::54][54]]=. If you have sumatrapdf installed, you can open the pdf in the sumatrapdf, which can let you to view the pdf comments externally.
+
+** Customize
+
+You can customize the pdf buffer width by:
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq interleave--window-split-width 150)
+#+END_SRC
+
+or page property suffix
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq interleave--page-property-suffix "page-number")
+#+END_SRC
 
 
