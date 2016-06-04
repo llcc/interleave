@@ -1,12 +1,12 @@
 * Interleave adapted to org-ref and helm-bibtex
 
-First, You can find a more comprehensive introduction of this package in [[https://github.com/rudolfochrist/interleave][interleave]]. I forked it from the orignal author rudolfochrist. Thanks rudolfochrist for giving us this great package.
+First, You can find a much more comprehensive introduction of this package in [[https://github.com/rudolfochrist/interleave][interleave]]. I forked it from the original author rudolfochrist. Thanks rudolfochrist for giving us this great package.
 
-So the package was modified on the top of [[github:rudolfochrist/interleave][rudolfochrist/interleave]] with a different approach, supply of new features and some issue fix. The biggest difference between these two is that you need to setup the pdf path in the orignal interleave, but no need in current one. The orignal one gets the pdf path from a =INTERLEAVE_PDF= property of entry headline which should be configured manually. This one can deal with the pdf closely combined with two great packages [[https://github.com/jkitchin/org-ref][org-ref]] and [[https://github.com/tmalsburg/helm-bibtex][helm-bibtex]], which have got them great reputation in the emacs bibtex management community. This package ensure to make interleave work with them flawlessly. 
+So the package was modified on the top of [[github:rudolfochrist/interleave][rudolfochrist/interleave]] with a different approach, supply of new features and some issue fix. The biggest difference between these two is that you need to setup the pdf path in the original interleave, but no need in current one. The original one gets the pdf path from a =INTERLEAVE_PDF= property of entry headline which should be configured manually. This one can process the pdf path closely combined with two great packages [[https://github.com/jkitchin/org-ref][org-ref]] and [[https://github.com/tmalsburg/helm-bibtex][helm-bibtex]], which have got them great reputation in the emacs bibtex management community. If you use them frequently, you can now just call =interleave= to make notes at ease without changing anything. This package ensure to make interleave work with them flawlessly. 
 
 * Installation
-t agri
-Since it has changed a lot of codes from the orignal one, and offers another algorithm different from orignal one, but with same name, I cannot submit it to the melpa repository. You can simply clone it by:
+
+Since it has changed a lot of codes from the original one, and offers another algorithm different from original one, but with same name, I cannot submit it to the Melpa repository. You can simply clone it by:
 
 #+BEGIN_EXAMPLE
 git clone https://github.com/llcc/interleave
@@ -24,7 +24,7 @@ and load it:
 If you use org-ref or helm-bibtex, you should have configured your own pdf and notes path. Helm-bibtex supports two kinds of note files: notes file per bibtex entry and multiple entry notes in one single file. This package only considers the multiple notes. If you make notes every single bibtex entry, you should not consider to use it. Of course, it is not hard to bring up this new functionality to compatible with multiple notes file, but it is not on my high priority. If you need this, please report it in the issue.
 
 ** Start to interleave
-After you create a note headline by =helm-bibtex=, this headline should have already had a propery called =Custom_ID= with the bibtex entry key.
+After you create a note headline by =helm-bibtex=, this headline should have already had a property called =Custom_ID= with the bibtex entry key.
 
 #+BEGIN_EXAMPLE
 :* Schi(2001): Notes of a bibtex entry
@@ -44,7 +44,7 @@ M-x interleave
 You can use @@html:<kbd>@@n@@html:</kbd>@@, @@html:<kbd>@@p@@html:</kbd>@@, @@html:<kbd>@@SPC@@html:</kbd>@@, @@html:<kbd>@@S-SPC@@html:</kbd>@@ to navigate the pdf, and synchronise pdf page and note by @@html:<kbd>@@M-.@@html:</kbd>@@, @@html:<kbd>@@M-p@@html:</kbd>@@, @@html:<kbd>@@M-n@@html:</kbd>@@. Quit by @@html:<kbd>@@q@@html:</kbd>@@.
 ** New notes for current pdf page
 
-Press @@html:<kbd>@@i@@html:</kbd>@@ to new a subnote for current pdf page. A property named with the combination of entry key and "page", i.e. =jaap-2001-fatig-page=, and page number.
+Press @@html:<kbd>@@i@@html:</kbd>@@ to new a sub-note for current pdf page. A property named with the combination of entry key and "page", i.e. =jaap-2001-fatig-page=, and page number.
 
 #+BEGIN_SRC org
 :** Notes for page [[file:/jaap-2001-fatig.pdf::54][54]] 
@@ -73,6 +73,6 @@ or page property suffix
 
 Currently, =pdf-tools= has not been supported yet, but it is on the table. 
 
-Any ideas and suggestion about the package is welcomed and appreciated!
+Any ideas and suggestion about the package are welcomed and appreciated!
 
 
