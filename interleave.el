@@ -91,6 +91,11 @@
   :group 'interleave
   :type 'string)
 
+(defcustom interleave--pdf-external-link t
+  "Store pdf link to open by sumatrapdf"
+  :group 'interleave
+  :type 'boolean)
+
 
 
 ;; -----------------Function definition starts
@@ -236,8 +241,10 @@ property set to PAGE. It narrows the subtree when found."
   (interleave--search-starts-at)
   (org-insert-heading-respect-content)
   (org-demote)
-  (insert (format "Notes for page [[file:%s::%d][%d]]"
-		  interleave--pdf-file page page))
+  (if interleave--pdf-external-link
+      (insert (format "Notes for page [[file:%s::%d][%d]]"
+		      interleave--pdf-file page page))
+    (insert (format "Notes for page %d" page)))
   (org-set-property interleave--page-property
 		    (number-to-string page))
   (org-end-of-subtree)

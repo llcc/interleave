@@ -55,7 +55,11 @@ Press @@html:<kbd>@@i@@html:</kbd>@@ to new a sub-note for current pdf page. A p
 
 Changing the page of the PDF will also narrow to the notes for this particular PDF page. If no notes exist for current pdf page, overview of all the pages notes will be shown in the notes buffer.
 
-You may have noticed the link: =[[file:/jaap-2001-fatig.pdf::54][54]]=. If you have sumatrapdf installed, you can open the pdf in the sumatrapdf, which can let you to view the pdf comments externally.
+You may have noticed the link: =[[file:/jaap-2001-fatig.pdf::54][54]]=. If you have sumatrapdf installed, you can open the pdf in the sumatrapdf with page synchronized, which can let you to view the pdf comments externally. Of course you can turn it off by
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq interleave--pdf-external-link nil)
+#+END_SRC
 
 ** Customize
 
