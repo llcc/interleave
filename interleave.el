@@ -167,7 +167,9 @@ this is the beginning of the buffer."
 		 (format
 		  "^\[ \t\r]*\:Custom_ID\: %s"
 		  interleave--custom-id) nil t)
-	  (user-error "No Custom ID found")))
+	  (user-error "No Custom ID found"))
+	(org-back-to-heading t)
+	(forward-char 1)) 
     (goto-char (point-min))))
 
 (defun interleave--switch-to-org-buffer (&optional insert-newline-maybe)
@@ -193,9 +195,12 @@ property set to PAGE. It narrows the subtree when found."
   (interleave--search-starts-at)
   (if (re-search-forward
        (format "^\[ \t\r\]*\:%s\: %s$" interleave--page-property page) nil t)
-      t) 
-  (org-show-entry)
-  (org-narrow-to-subtree))
+      (progn (org-show-entry)
+	     (org-narrow-to-subtree)
+	     (org-end-of-subtree)
+	     t)
+    (org-show-subtree)
+    (org-cycle-hide-drawers 'all)))
 
 ;;;###autoload
 (defun interleave-goto-next-page ()
@@ -206,6 +211,12 @@ property set to PAGE. It narrows the subtree when found."
     (unless (= page (doc-view-last-page-number))
       (interleave--goto-note-at (1+ page))
       (interleave--switch-to-pdf-buffer))))
+
+(defun interleave-goto-next-page-from-notes ()
+  "Go to next page in PDF from org notes buffer"
+  (interactive)
+  (interleave--switch-to-pdf-buffer)
+  (interleave-docview-scroll-down))
 
 ;;;###autoload
 (defun interleave-goto-previous-page ()
@@ -244,7 +255,7 @@ property set to PAGE. It narrows the subtree when found."
   (org-insert-heading-respect-content)
   (org-demote)
   (if interleave--pdf-external-link
-      (insert (format "Notes for page [[file:%s::%d][%d]]"
+      (insert (format "Notes for page [[%s::%d][%d]]"
 		      interleave--pdf-file page page))
     (insert (format "Notes for page %d" page)))
   (org-set-property interleave--page-property
@@ -261,7 +272,7 @@ jump to the notes buffer."
   (interactive)
   (let ((page (doc-view-current-page)))
     (if (interleave--goto-note-at page)
-        (interleave--switch-to-org-buffer t)
+        (interleave--switch-to-org-buffer)
       (interleave--create-new-note page))))
 
 ;;;###autoload
@@ -472,6 +483,7 @@ Keybindings (org-mode buffer):
 (define-key interleave-map (kbd "M-.") #'interleave--sync-pdf-page-current)
 (define-key interleave-map (kbd "M-p") #'interleave--sync-pdf-page-previous)
 (define-key interleave-map (kbd "M-n") #'interleave--sync-pdf-page-next)
+(define-key interleave-map (kbd "M-SPC") #'interleave-goto-next-page-from-notes)
 
 (define-key interleave-pdf-mode-map (kbd "n")     #'interleave-goto-next-page)
 (define-key interleave-pdf-mode-map (kbd "p")     #'interleave-goto-previous-page)
